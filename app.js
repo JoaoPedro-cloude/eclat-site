@@ -35,6 +35,20 @@
       lote();
     }
 
+    // Interpola os pontos [progresso, x] de S.frames.foco
+    const focoEm = (p) => {
+      const f = S.frames.foco;
+      if (p <= f[0][0]) return f[0][1];
+      for (let k = 1; k < f.length; k++) {
+        if (p <= f[k][0]) {
+          const t = (p - f[k - 1][0]) / (f[k][0] - f[k - 1][0]);
+          const s = t * t * (3 - 2 * t); // suave
+          return f[k - 1][1] + (f[k][1] - f[k - 1][1]) * s;
+        }
+      }
+      return f[f.length - 1][1];
+    };
+
     const pronto = (i) => quadros[i] && quadros[i].complete && quadros[i].naturalWidth;
     const maisProximo = (i) => {
       for (let d = 0; d < total; d++) {
@@ -59,7 +73,10 @@
       const cw = canvas.width, ch = canvas.height;
       const escala = Math.max(cw / img.naturalWidth, ch / img.naturalHeight); // "cover"
       const w = img.naturalWidth * escala, h = img.naturalHeight * escala;
-      ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+      // Tela em pé: o recorte acompanha o assunto do vídeo (foco horizontal por quadro)
+      let x = (cw - w) / 2;
+      if (w > cw && S.frames.foco) x = Math.min(0, Math.max(cw - w, cw / 2 - focoEm(j / (total - 1)) * w));
+      ctx.drawImage(img, x, (ch - h) / 2, w, h);
       desenhado = j;
     }
 
